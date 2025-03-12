@@ -1,0 +1,58 @@
+services:
+  mysql:
+    image: mysql:8.0.41-debian
+    container_name: nestjs_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nestjs_db
+      MYSQL_USER: nestjs_user
+      MYSQL_PASSWORD: nestjs_pass
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - nest_network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 30s
+      retries: 5
+      start_period: 60s
+      timeout: 10s
+
+  nestjs_app:
+    image: node:latest
+    build: ./paggo_backend
+    container_name: nestjs_app
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "mysql://nestjs_user:nestjs_pass@mysql:3306/nestjs_db"
+      DATABASE_HOST: mysql
+      DATABASE_PORT: 3306
+      DATABASE_USER: nestjs_user
+      DATABASE_PASSWORD: nestjs_pass
+      DATABASE_NAME: nestjs_db
+      GEMINI_API_KEY: AIzaSyDHhqAPnHFqbBriyZ_aE8673Zk1DJjY0SM
+    ports:
+      - '3002:3002'
+    networks:
+      - nest_network
+
+  nextjs_frontend:
+    build: ./paggo_frontend
+    container_name: nextjs_frontend
+    restart: always
+    ports:
+      - '3000:3000'
+    networks:
+      - nest_network
+
+volumes:
+  mysql_data:
+
+networks:
+  nest_network:

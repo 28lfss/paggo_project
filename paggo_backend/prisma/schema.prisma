@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url = env("DATABASE_URL")
+}
+
+model Invoice {
+  id Int @id @default(autoincrement())
+  path String @unique
+  ocr String @db.Text
+  explanation String @db.Text
+  user User @relation(fields: [user_id], references: [id])
+  user_id Int
+  queries UserQuery[]
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  email String @db.VarChar(255) @unique
+  username String @db.VarChar(32) @unique
+  password String @db.VarChar(128)
+  invoices Invoice[]
+  UserQuery UserQuery[]
+}
+
+model UserQuery {
+  id Int @id @default(autoincrement())
+  user User @relation(fields: [user_id], references: [id])
+  user_id Int
+  invoice Invoice @relation(fields: [invoice_id], references: [id])
+  invoice_id Int
+  query String // User question
+  response String @db.Text // Generated response
+  createdAt DateTime @default(now())
+}
